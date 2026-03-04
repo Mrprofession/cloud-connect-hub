@@ -14,7 +14,180 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      code_runs: {
+        Row: {
+          code: string
+          created_at: string
+          execution_time: number
+          id: string
+          language: string
+          output: string
+          success: boolean
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          execution_time?: number
+          id?: string
+          language: string
+          output?: string
+          success?: boolean
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          execution_time?: number
+          id?: string
+          language?: string
+          output?: string
+          success?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      finance_entries: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          date: string
+          description: string
+          id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      health_entries: {
+        Row: {
+          created_at: string
+          date: string
+          exercise: number
+          eye_strain: boolean
+          headache: boolean
+          id: string
+          mood: string
+          sleep: number
+          stress: number
+          user_id: string
+          water: number
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          exercise?: number
+          eye_strain?: boolean
+          headache?: boolean
+          id?: string
+          mood?: string
+          sleep?: number
+          stress?: number
+          user_id: string
+          water?: number
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          exercise?: number
+          eye_strain?: boolean
+          headache?: boolean
+          id?: string
+          mood?: string
+          sleep?: number
+          stress?: number
+          user_id?: string
+          water?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          role: Database["public"]["Enums"]["app_role"]
+          selected_module: Database["public"]["Enums"]["app_module"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          selected_module?: Database["public"]["Enums"]["app_module"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          selected_module?: Database["public"]["Enums"]["app_module"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          actual_time: number
+          category: string
+          created_at: string
+          description: string
+          estimated_time: number
+          id: string
+          status: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          actual_time?: number
+          category?: string
+          created_at?: string
+          description?: string
+          estimated_time?: number
+          id?: string
+          status?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          actual_time?: number
+          category?: string
+          created_at?: string
+          description?: string
+          estimated_time?: number
+          id?: string
+          status?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +196,13 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      app_module: "health" | "productivity" | "compiler" | "ai" | "integration"
+      app_role:
+        | "student"
+        | "teacher"
+        | "software_professional"
+        | "project_manager"
+        | "examiner"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +329,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_module: ["health", "productivity", "compiler", "ai", "integration"],
+      app_role: [
+        "student",
+        "teacher",
+        "software_professional",
+        "project_manager",
+        "examiner",
+      ],
+    },
   },
 } as const
