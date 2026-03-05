@@ -1,33 +1,38 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Sparkles, GraduationCap, BookOpen, Code, BarChart3, ClipboardCheck } from "lucide-react";
+import { Sparkles, GraduationCap, BookOpen, Code, BarChart3, ClipboardCheck, Bug, Wrench, UserCircle } from "lucide-react";
 import { useAuth, Role } from "@/context/AuthContext";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 const roles: { role: Role; label: string; icon: any; desc: string; color: string }[] = [
-  { role: "student", label: "Student", icon: GraduationCap, desc: "Track your learning, health & productivity", color: "from-indigo-500 to-purple-600" },
+  { role: "student", label: "Student", icon: GraduationCap, desc: "Track learning, health & productivity", color: "from-indigo-500 to-purple-600" },
   { role: "teacher", label: "Teacher", icon: BookOpen, desc: "Monitor students, analyze performance", color: "from-blue-500 to-slate-600" },
-  { role: "software_professional", label: "Software Professional", icon: Code, desc: "KPIs, focus scores & code analytics", color: "from-cyan-500 to-blue-600" },
+  { role: "tester", label: "Tester", icon: Bug, desc: "QA testing, bug tracking & reports", color: "from-orange-500 to-red-600" },
+  { role: "developer", label: "Developer", icon: Code, desc: "Code analytics, focus scores & KPIs", color: "from-cyan-500 to-blue-600" },
+  { role: "examiner", label: "Examiner", icon: ClipboardCheck, desc: "Read-only evaluation & reports", color: "from-gray-400 to-gray-600" },
   { role: "project_manager", label: "Project Manager", icon: BarChart3, desc: "Team metrics, burnout alerts & deadlines", color: "from-emerald-500 to-teal-600" },
-  { role: "examiner", label: "External Examiner", icon: ClipboardCheck, desc: "Read-only evaluation & reports", color: "from-gray-400 to-gray-500" },
 ];
 
 export default function RoleSelection() {
   const { selectRole, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const [showOther, setShowOther] = useState(false);
+  const [otherRole, setOtherRole] = useState("");
 
   const handleSelect = async (role: Role) => {
-    if (!isAuthenticated) {
-      toast.error("Please sign up first");
-      navigate("/signup");
-      return;
-    }
+    if (!isAuthenticated) { toast.error("Please sign up first"); navigate("/signup"); return; }
     try {
       await selectRole(role);
       navigate("/module-selection");
-    } catch (err: any) {
-      toast.error(err.message);
-    }
+    } catch (err: any) { toast.error(err.message); }
+  };
+
+  const handleOther = async () => {
+    if (!otherRole.trim()) { toast.error("Please enter your profession"); return; }
+    await handleSelect("other");
   };
 
   return (
@@ -43,20 +48,40 @@ export default function RoleSelection() {
         <h2 className="font-display text-3xl font-bold text-center mb-2">Select Your Role</h2>
         <p className="text-muted-foreground text-center text-sm mb-10">This determines your dashboard experience</p>
 
-        <div className="grid gap-4">
+        <div className="grid gap-3">
           {roles.map((r, i) => (
             <motion.button key={r.role} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.08 }} onClick={() => handleSelect(r.role)}
-              className="glass-card p-5 flex items-center gap-5 text-left hover:glow-border transition-all group">
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${r.color} flex items-center justify-center shrink-0`}>
-                <r.icon className="w-6 h-6 text-foreground" />
+              transition={{ delay: i * 0.06 }} onClick={() => handleSelect(r.role)}
+              className="glass-card p-4 flex items-center gap-4 text-left hover:glow-border transition-all group">
+              <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${r.color} flex items-center justify-center shrink-0`}>
+                <r.icon className="w-5 h-5 text-foreground" />
               </div>
               <div>
-                <div className="font-display font-semibold text-lg">{r.label}</div>
+                <div className="font-display font-semibold">{r.label}</div>
                 <div className="text-muted-foreground text-sm">{r.desc}</div>
               </div>
             </motion.button>
           ))}
+
+          {!showOther ? (
+            <motion.button initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }} onClick={() => setShowOther(true)}
+              className="glass-card p-4 flex items-center gap-4 text-left hover:glow-border transition-all">
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center shrink-0">
+                <UserCircle className="w-5 h-5 text-foreground" />
+              </div>
+              <div>
+                <div className="font-display font-semibold">Other</div>
+                <div className="text-muted-foreground text-sm">Enter your custom profession</div>
+              </div>
+            </motion.button>
+          ) : (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card p-4 flex gap-3">
+              <Input placeholder="Enter your profession" value={otherRole} onChange={e => setOtherRole(e.target.value)}
+                className="bg-secondary border-border flex-1" />
+              <Button onClick={handleOther} className="bg-primary text-primary-foreground">Continue</Button>
+            </motion.div>
+          )}
         </div>
       </motion.div>
     </div>
