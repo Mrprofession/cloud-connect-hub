@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./AuthContext";
 
-interface HealthEntry {
+export interface HealthEntry {
   id?: string;
   date: string;
   sleep: number;
@@ -14,7 +14,7 @@ interface HealthEntry {
   water: number;
 }
 
-interface Task {
+export interface Task {
   id: string;
   title: string;
   description: string;
@@ -25,7 +25,7 @@ interface Task {
   createdAt: string;
 }
 
-interface CodeRun {
+export interface CodeRun {
   id: string;
   language: string;
   code: string;
@@ -35,7 +35,7 @@ interface CodeRun {
   success: boolean;
 }
 
-interface FinanceEntry {
+export interface FinanceEntry {
   id: string;
   type: "income" | "expense";
   amount: number;
@@ -44,11 +44,33 @@ interface FinanceEntry {
   date: string;
 }
 
+export interface Note {
+  id: string;
+  title: string;
+  content: string;
+  linkedTaskId: string | null;
+  color: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Reminder {
+  id: string;
+  title: string;
+  description: string;
+  dueDate: string;
+  isCompleted: boolean;
+  linkedTaskId: string | null;
+  createdAt: string;
+}
+
 interface UserData {
   health: HealthEntry[];
   tasks: Task[];
   codeRuns: CodeRun[];
   finance: FinanceEntry[];
+  notes: Note[];
+  reminders: Reminder[];
   healthScore: number;
   productivityScore: number;
   codeScore: number;
@@ -63,18 +85,19 @@ interface DataContextType {
   deleteTask: (id: string) => Promise<void>;
   addCodeRun: (run: Omit<CodeRun, "id" | "timestamp">) => Promise<void>;
   addFinanceEntry: (entry: Omit<FinanceEntry, "id">) => Promise<void>;
+  deleteFinanceEntry: (id: string) => Promise<void>;
+  addNote: (note: Omit<Note, "id" | "createdAt" | "updatedAt">) => Promise<void>;
+  updateNote: (id: string, updates: Partial<Note>) => Promise<void>;
+  deleteNote: (id: string) => Promise<void>;
+  addReminder: (reminder: Omit<Reminder, "id" | "createdAt">) => Promise<void>;
+  updateReminder: (id: string, updates: Partial<Reminder>) => Promise<void>;
+  deleteReminder: (id: string) => Promise<void>;
   refreshData: () => Promise<void>;
 }
 
 const defaultData: UserData = {
-  health: [],
-  tasks: [],
-  codeRuns: [],
-  finance: [],
-  healthScore: 0,
-  productivityScore: 0,
-  codeScore: 0,
-  financeScore: 0,
+  health: [], tasks: [], codeRuns: [], finance: [], notes: [], reminders: [],
+  healthScore: 0, productivityScore: 0, codeScore: 0, financeScore: 0,
 };
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -104,35 +127,47 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const refreshData = useCallback(async () => {
     if (!user) { setData(defaultData); return; }
 
-    const [healthRes, tasksRes, codeRes, financeRes] = await Promise.all([
+    const [healthRes, tasksRes, codeRes, financeRes, notesRes, remindersRes] = await Promise.all([
       supabase.from("health_entries").select("*").eq("user_id", user.id).order("created_at"),
       supabase.from("tasks").select("*").eq("user_id", user.id).order("created_at"),
       supabase.from("code_runs").select("*").eq("user_id", user.id).order("created_at"),
       supabase.from("finance_entries").select("*").eq("user_id", user.id).order("created_at"),
+      supabase.from("notes" as any).select("*").eq("user_id", user.id).order("created_at"),
+      supabase.from("reminders" as any).select("*").eq("user_id", user.id).order("due_date"),
     ]);
 
-    const health: HealthEntry[] = (healthRes.data || []).map(h => ({
+    const health: HealthEntry[] = (healthRes.data || []).map((h: any) => ({
       id: h.id, date: h.date, sleep: Number(h.sleep), stress: Number(h.stress),
       headache: h.headache, eyeStrain: h.eye_strain, mood: h.mood,
       exercise: Number(h.exercise), water: Number(h.water),
     }));
-    const tasks: Task[] = (tasksRes.data || []).map(t => ({
+    const tasks: Task[] = (tasksRes.data || []).map((t: any) => ({
       id: t.id, title: t.title, description: t.description,
       status: t.status as Task["status"], category: t.category,
       estimatedTime: Number(t.estimated_time), actualTime: Number(t.actual_time),
       createdAt: t.created_at,
     }));
-    const codeRuns: CodeRun[] = (codeRes.data || []).map(c => ({
+    const codeRuns: CodeRun[] = (codeRes.data || []).map((c: any) => ({
       id: c.id, language: c.language, code: c.code, output: c.output,
       executionTime: Number(c.execution_time), timestamp: c.created_at, success: c.success,
     }));
-    const finance: FinanceEntry[] = (financeRes.data || []).map(f => ({
+    const finance: FinanceEntry[] = (financeRes.data || []).map((f: any) => ({
       id: f.id, type: f.type as FinanceEntry["type"], amount: Number(f.amount),
       category: f.category, description: f.description, date: f.date,
     }));
+    const notes: Note[] = ((notesRes.data as any[]) || []).map((n: any) => ({
+      id: n.id, title: n.title, content: n.content,
+      linkedTaskId: n.linked_task_id, color: n.color,
+      createdAt: n.created_at, updatedAt: n.updated_at,
+    }));
+    const reminders: Reminder[] = ((remindersRes.data as any[]) || []).map((r: any) => ({
+      id: r.id, title: r.title, description: r.description,
+      dueDate: r.due_date, isCompleted: r.is_completed,
+      linkedTaskId: r.linked_task_id, createdAt: r.created_at,
+    }));
 
     const scores = calculateScores(health, tasks, codeRuns, finance);
-    setData({ health, tasks, codeRuns, finance, ...scores });
+    setData({ health, tasks, codeRuns, finance, notes, reminders, ...scores });
   }, [user]);
 
   useEffect(() => { refreshData(); }, [refreshData]);
@@ -194,9 +229,73 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await refreshData();
   };
 
+  const deleteFinanceEntry = async (id: string) => {
+    if (!user) return;
+    await supabase.from("finance_entries").delete().eq("id", id);
+    await refreshData();
+  };
+
+  const addNote = async (note: Omit<Note, "id" | "createdAt" | "updatedAt">) => {
+    if (!user) return;
+    await (supabase.from("notes" as any) as any).insert({
+      user_id: user.id, title: note.title, content: note.content,
+      linked_task_id: note.linkedTaskId, color: note.color,
+    });
+    await refreshData();
+  };
+
+  const updateNote = async (id: string, updates: Partial<Note>) => {
+    if (!user) return;
+    const dbUpdates: Record<string, unknown> = {};
+    if (updates.title !== undefined) dbUpdates.title = updates.title;
+    if (updates.content !== undefined) dbUpdates.content = updates.content;
+    if (updates.color !== undefined) dbUpdates.color = updates.color;
+    if (updates.linkedTaskId !== undefined) dbUpdates.linked_task_id = updates.linkedTaskId;
+    await (supabase.from("notes" as any) as any).update(dbUpdates).eq("id", id);
+    await refreshData();
+  };
+
+  const deleteNote = async (id: string) => {
+    if (!user) return;
+    await (supabase.from("notes" as any) as any).delete().eq("id", id);
+    await refreshData();
+  };
+
+  const addReminder = async (reminder: Omit<Reminder, "id" | "createdAt">) => {
+    if (!user) return;
+    await (supabase.from("reminders" as any) as any).insert({
+      user_id: user.id, title: reminder.title, description: reminder.description,
+      due_date: reminder.dueDate, is_completed: reminder.isCompleted,
+      linked_task_id: reminder.linkedTaskId,
+    });
+    await refreshData();
+  };
+
+  const updateReminder = async (id: string, updates: Partial<Reminder>) => {
+    if (!user) return;
+    const dbUpdates: Record<string, unknown> = {};
+    if (updates.title !== undefined) dbUpdates.title = updates.title;
+    if (updates.description !== undefined) dbUpdates.description = updates.description;
+    if (updates.dueDate !== undefined) dbUpdates.due_date = updates.dueDate;
+    if (updates.isCompleted !== undefined) dbUpdates.is_completed = updates.isCompleted;
+    if (updates.linkedTaskId !== undefined) dbUpdates.linked_task_id = updates.linkedTaskId;
+    await (supabase.from("reminders" as any) as any).update(dbUpdates).eq("id", id);
+    await refreshData();
+  };
+
+  const deleteReminder = async (id: string) => {
+    if (!user) return;
+    await (supabase.from("reminders" as any) as any).delete().eq("id", id);
+    await refreshData();
+  };
+
   return (
     <DataContext.Provider value={{
-      data, addHealthEntry, addTask, updateTask, deleteTask, addCodeRun, addFinanceEntry, refreshData,
+      data, addHealthEntry, addTask, updateTask, deleteTask, addCodeRun,
+      addFinanceEntry, deleteFinanceEntry,
+      addNote, updateNote, deleteNote,
+      addReminder, updateReminder, deleteReminder,
+      refreshData,
     }}>
       {children}
     </DataContext.Provider>

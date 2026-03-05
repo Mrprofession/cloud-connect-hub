@@ -2,8 +2,8 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { supabase } from "@/integrations/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
-export type Role = "student" | "teacher" | "software_professional" | "project_manager" | "examiner";
-export type Module = "health" | "productivity" | "compiler" | "ai" | "integration";
+export type Role = "student" | "teacher" | "software_professional" | "project_manager" | "examiner" | "tester" | "developer" | "other";
+export type Module = "health" | "productivity" | "compiler" | "ai" | "integration" | "finance";
 
 interface User {
   id: string;
@@ -53,7 +53,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
-        // Use setTimeout to avoid Supabase deadlock
         setTimeout(() => fetchProfile(session.user), 0);
       } else {
         setUser(null);
@@ -73,7 +72,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (error.message.includes("Invalid login")) {
+        throw new Error("Invalid email or password.");
+      }
+      throw new Error(error.message);
+    }
   };
 
   const signUp = async (email: string, password: string, name: string) => {
@@ -89,24 +93,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const selectRole = async (role: Role) => {
     const { data: { user: authUser } } = await supabase.auth.getUser();
     if (!authUser) throw new Error("Not authenticated");
-    
     const { error } = await supabase
       .from("profiles")
-      .update({ role })
+      .update({ role } as any)
       .eq("user_id", authUser.id);
     if (error) throw new Error(error.message);
+    await fetchProfile(authUser);
   };
 
   const selectModule = async (module: Module) => {
     const { data: { user: authUser } } = await supabase.auth.getUser();
     if (!authUser) throw new Error("Not authenticated");
-    
     const { error } = await supabase
       .from("profiles")
-      .update({ selected_module: module })
+      .update({ selected_module: module } as any)
       .eq("user_id", authUser.id);
     if (error) throw new Error(error.message);
-
     await fetchProfile(authUser);
     setPendingUser(null);
   };
@@ -119,15 +121,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider value={{
-      user,
-      isAuthenticated: !!user,
-      loading,
-      signIn,
-      signUp,
-      selectRole,
-      selectModule,
-      signOut,
-      pendingUser,
+      user, isAuthenticated: !!user, loading,
+      signIn, signUp, selectRole, selectModule, signOut, pendingUser,
     }}>
       {children}
     </AuthContext.Provider>

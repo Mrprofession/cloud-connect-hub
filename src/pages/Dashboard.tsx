@@ -53,7 +53,7 @@ function DashboardContent() {
         <ScoreCard icon={Heart} label="Health Score" score={data.healthScore} color="from-rose-500 to-pink-600" />
         <ScoreCard icon={Zap} label="Productivity" score={data.productivityScore} color="from-amber-500 to-orange-600" />
         <ScoreCard icon={Code} label="Code Quality" score={data.codeScore} color="from-emerald-500 to-teal-600" />
-        <ScoreCard icon={Brain} label="AI Insights" score={data.financeScore} color="from-violet-500 to-purple-600" />
+        <ScoreCard icon={Brain} label="Finance Score" score={data.financeScore} color="from-yellow-500 to-amber-600" />
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

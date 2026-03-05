@@ -122,6 +122,47 @@ export type Database = {
         }
         Relationships: []
       }
+      notes: {
+        Row: {
+          color: string
+          content: string
+          created_at: string
+          id: string
+          linked_task_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          content?: string
+          created_at?: string
+          id?: string
+          linked_task_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          content?: string
+          created_at?: string
+          id?: string
+          linked_task_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_linked_task_id_fkey"
+            columns: ["linked_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -151,6 +192,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      reminders: {
+        Row: {
+          created_at: string
+          description: string
+          due_date: string
+          id: string
+          is_completed: boolean
+          linked_task_id: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          due_date?: string
+          id?: string
+          is_completed?: boolean
+          linked_task_id?: string | null
+          title?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          due_date?: string
+          id?: string
+          is_completed?: boolean
+          linked_task_id?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminders_linked_task_id_fkey"
+            columns: ["linked_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tasks: {
         Row: {
@@ -196,13 +278,22 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      app_module: "health" | "productivity" | "compiler" | "ai" | "integration"
+      app_module:
+        | "health"
+        | "productivity"
+        | "compiler"
+        | "ai"
+        | "integration"
+        | "finance"
       app_role:
         | "student"
         | "teacher"
         | "software_professional"
         | "project_manager"
         | "examiner"
+        | "tester"
+        | "developer"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -330,13 +421,23 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_module: ["health", "productivity", "compiler", "ai", "integration"],
+      app_module: [
+        "health",
+        "productivity",
+        "compiler",
+        "ai",
+        "integration",
+        "finance",
+      ],
       app_role: [
         "student",
         "teacher",
         "software_professional",
         "project_manager",
         "examiner",
+        "tester",
+        "developer",
+        "other",
       ],
     },
   },
